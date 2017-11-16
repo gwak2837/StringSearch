@@ -40,7 +40,7 @@ void strcut(char *H)	//file_directory에서 맨 뒤의 파일명을 제거하는
 	H[i + 1] = '\0';
 }
 
-int compare_with_size(const void *a, const void  *b)
+int compare_with_size(const void *a, const void  *b)	//qsort 내림차순 정렬
 {
 	result *ptr_a = (result*)a;
 	result *ptr_b = (result*)b;
@@ -135,6 +135,7 @@ int main()
 		}
 		
 		_findclose(hFile);
+		free(r);
 		free(find_str);
 	}
 	return 0;
