@@ -123,13 +123,13 @@ int main()
 				_strlwr(find_str);
 			}
 
-			str_ptr = strstr(buffer, find_str);     //문자를 찾음 - 찾는 속도 개선필요
+			str_ptr = strstr(buffer, find_str);
 			if (str_ptr == NULL) check += 1;
 
 			while (str_ptr != NULL)                // 검색된 문자열이 없을 때까지 반복
 			{
 				count += 1;
-				str_ptr = strstr(str_ptr + 1, find_str);    //문자를 찾음 - 찾는 속도 개선필요
+				str_ptr = strstr(str_ptr + 1, find_str);
 			}
 
 			r = (result *)realloc(r, (i + 1) * sizeof(result));
