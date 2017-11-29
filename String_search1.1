@@ -69,10 +69,10 @@ int main()
 	
 	printf("폴더 위치를 입력하세요 : ");
 	scanf("%[^\n]s", file_directory);
-	fflush(stdin);
+	
 	printf("찾을 단어를 입력하세요 : ");
 	scanf(" %[^\n]s", find_str);
-	fflush(stdin);
+	
 	printf("대소문자를 구분하나요?(Y/N) : ");
 	scanf(" %c", &YN);
 	getchar();
@@ -124,10 +124,7 @@ int main()
 			}
 
 			str_ptr = strstr(buffer, find_str);     //문자를 찾음 - 찾는 속도 개선필요
-			if (str_ptr == NULL)
-			{
-				check += 1;
-			}
+			if (str_ptr == NULL) check += 1;
 
 			while (str_ptr != NULL)                // 검색된 문자열이 없을 때까지 반복
 			{
@@ -149,7 +146,7 @@ int main()
 
 		if (check == i)
 		{
-			printf("No result in such directory.\n");
+			printf(":: No result in such directory.\n");
 		}
 		else
 		{
