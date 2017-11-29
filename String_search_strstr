@@ -53,11 +53,11 @@ int compare_with_size(const void *a, const void  *b)	//qsort 내림차순 정렬
 
 int main()
 {
-	char *find_str = (char *)malloc(200);
+	char *find_str = (char *)malloc(1000);
 	char *buffer;
 	char *e2;
 	char *str_ptr;
-	char *file_directory = (char *)malloc(200);		//폴더 위치
+	char *file_directory = (char *)malloc(1000);		//폴더 위치
 	int count, check = 0, i = 0, j = 0;		//count = 단어 개수, check = 모든 파일에 찾는 단어가 없을 때
 	int file_size;
 	char YN = 'Y';
@@ -65,14 +65,14 @@ int main()
 	_finddatai64_t c_file;
 	intptr_t hFile;
 
-	result *r = (result *)malloc(sizeof(result)); 
-	
+	result *r = (result *)malloc(sizeof(result));
+
 	printf("폴더 위치를 입력하세요 : ");
 	scanf("%[^\n]s", file_directory);
-	
+
 	printf("찾을 단어를 입력하세요 : ");
 	scanf(" %[^\n]s", find_str);
-	
+
 	printf("대소문자를 구분하나요?(Y/N) : ");
 	scanf(" %c", &YN);
 	getchar();
@@ -81,7 +81,7 @@ int main()
 
 	if ((hFile = _findfirsti64(file_directory, &c_file)) == -1L)
 	{
-		switch (errno) 
+		switch (errno)
 		{
 		case ENOENT:
 			printf(":: No file in such directory ::\n"); break;
@@ -93,14 +93,14 @@ int main()
 			fprintf(stderr, "Unknown error.\n"); exit(1); break;
 		}
 	}
-	else 
+	else
 	{
 		strcut(file_directory);
-		do 
+		do
 		{
 			count = 0;
 			strcat(file_directory, c_file.name);
-			
+
 			FILE *fp = fopen(file_directory, "rt");
 			if (fp == NULL)
 				return 1;
@@ -131,8 +131,8 @@ int main()
 				count += 1;
 				str_ptr = strstr(str_ptr + 1, find_str);    //문자를 찾음 - 찾는 속도 개선필요
 			}
-			
-			r = (result *)realloc(r ,(i+1)*sizeof(result));
+
+			r = (result *)realloc(r, (i + 1) * sizeof(result));
 			strcpy(r[i].filename, c_file.name);
 			r[i].count = count;
 
@@ -161,6 +161,7 @@ int main()
 		_findclose(hFile);
 		free(r);
 		free(find_str);
+		free(file_directory);
 	}
 	return 0;
 }
