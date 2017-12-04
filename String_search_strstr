@@ -53,14 +53,15 @@ int compare_with_size(const void *a, const void  *b)	//qsort 내림차순 정렬
 
 int main()
 {
-	char *find_str = (char *)malloc(1000);
-	char *buffer;
+	char *find_str = (char *)malloc(1000); //찾고 싶은 단어
+	char *buffer; //어떤 파일 내용 저장
 	char *e2;
 	char *str_ptr;
-	char *file_directory = (char *)malloc(1000);		//폴더 위치
-	int count, check = 0, i = 0, j = 0;		//count = 단어 개수, check = 모든 파일에 찾는 단어가 없을 때
-	int file_size;
-	char YN = 'Y';
+	char *file_directory = (char *)malloc(1000); //폴더 위치
+	int count, check = 0, i = 0, j = 0; //count = 단어 개수, check = 모든 파일에 찾는 단어가 없을 때
+	int file_size; //어떤 파일의 텍스트 길이
+	char YN1 = 'Y';
+	char YN2 = 'Y';
 
 	_finddatai64_t c_file;
 	intptr_t hFile;
@@ -74,7 +75,10 @@ int main()
 	scanf(" %[^\n]s", find_str);
 
 	printf("대소문자를 구분하나요?(Y/N) : ");
-	scanf(" %c", &YN);
+	scanf(" %c", &YN1);
+
+	printf("입력한 단어만 정확히 검색하나요?(Y/N) : ");
+	scanf(" %c", &YN2);
 	getchar();
 
 	strcat(file_directory, "\\*.txt");
@@ -109,7 +113,7 @@ int main()
 			buffer = (char *)calloc(1, (size_t)file_size + 1);
 			e2 = (char *)calloc(1, (size_t)file_size + 1);
 
-			while (!feof(fp))
+			while (!feof(fp)) //fgets이 파일 끝까지 버퍼에 저장
 			{
 				e2 = fgets(e2, file_size, fp);	//fgets으로 문자열을 읽는데 오류가 나지 않는다고 가정
 				if (e2 == NULL)	break;	//strcat NULL 쓰기 방지
@@ -117,20 +121,23 @@ int main()
 			}
 
 
-			if (YN == 'N')		//대소문자를 구분하지 않을 때
+			if (YN1 == 'N') //대소문자를 구분하지 않을 때
 			{
 				_strlwr(buffer);
 				_strlwr(find_str);
 			}
 
 			str_ptr = strstr(buffer, find_str);
-			if (str_ptr == NULL) check += 1;
-
-			while (str_ptr != NULL)                // 검색된 문자열이 없을 때까지 반복
+			while (str_ptr != NULL) // 검색된 문자열이 없을 때까지 반복
 			{
-				count += 1;
-				str_ptr = strstr(str_ptr + 1, find_str);
+				if (YN2 == 'N' || (*(str_ptr - 1)<65 || 90<*(str_ptr - 1) && *(str_ptr - 1)<97 || 122 < *(str_ptr - 1)) && (*(str_ptr + strlen(find_str))<65 || 90<*(str_ptr + strlen(find_str)) && *(str_ptr + strlen(find_str))<97 || 122 < *(str_ptr + strlen(find_str)))) //찾은 문자열 앞과 뒤에 알파벳이 없거나 (정확히 검색) = N이면
+				{
+					count++;
+				}
+				str_ptr = strstr(str_ptr + strlen(find_str), find_str);			
 			}
+
+			if (count == 0) check++;
 
 			r = (result *)realloc(r, (i + 1) * sizeof(result));
 			strcpy(r[i].filename, c_file.name);
@@ -140,22 +147,25 @@ int main()
 			free(buffer);
 			free(e2);
 
+			buffer = NULL;
+			e2 = NULL;
+
 			strcut(file_directory);
 			i++;
 		} while (_findnexti64(hFile, &c_file) == 0);
 
 		if (check == i)
 		{
-			printf(":: No result in such directory.\n");
+			printf("\n:: No result in such directory.\n");
 		}
 		else
 		{
 			qsort(r, i, sizeof(result), compare_with_size);
-			printf("File name            |  Count\n");
+			printf("\nFile name                                          |  Count\n");
 			for (j = 0; j < i; j++)
 			{
 				if (r[j].count == 0) continue;
-				printf("%-20s |%5d번\n", r[j].filename, r[j].count);
+				printf("%-50s |%5d번\n", r[j].filename, r[j].count);
 			}
 		}
 		_findclose(hFile);
@@ -163,5 +173,6 @@ int main()
 		free(find_str);
 		free(file_directory);
 	}
+	system("pause");
 	return 0;
 }
