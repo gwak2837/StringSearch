@@ -11,7 +11,6 @@ typedef struct _Result
 {
 	char filename[256];
 	int count;
-	int *str_location;
 }result;
 
 int getFileSize(FILE *fp)
@@ -165,7 +164,7 @@ int main()
 			for (j = 0; j < i; j++)
 			{
 				if (r[j].count == 0) continue;
-				printf("%-50s |%5d번\n", r[j].filename, r[j].count);
+				printf("%-50s |%5d번 | ...%s...\n", r[j].filename, r[j].count);
 			}
 		}
 		_findclose(hFile);
