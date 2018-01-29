@@ -4,94 +4,56 @@
 #include <string.h>
 #include <io.h>
 
-typedef struct _Result
+typedef struct result
 {
 	char *filename;
 	int count;
-	char *str_location;
-}result;
+	char str_location[50];
+} Result;
 
-int getFileSize(FILE *fp)
-{
-	int size;
-	long currPos = ftell(fp);
-
-	fseek(fp, 0, SEEK_END);
-	size = (int)ftell(fp);
-
-	fseek(fp, currPos, SEEK_SET);
-
-	return size;
-}
-
-void strcut(char *H)	//file_directory에서 맨 뒤의 파일명을 제거하는 함수
-{
-	int i = 0;
-	while (H[i])
-	{
-		i++;
-	}
-	while (H[i] != '\\')
-	{
-		i--;
-	}
-	H[i + 1] = '\0';
-}
-
-int compare_with_size(const void *a, const void  *b)	//qsort 내림차순 정렬
-{
-	result *ptr_a = (result*)a;
-	result *ptr_b = (result*)b;
-
-	if (ptr_a->count < ptr_b->count) return 1;
-	else if (ptr_a->count == ptr_b->count) return 0;
-	else return -1;
-}
-
-char *delete_enter(char* str) //str에 포함된 '\n'을 ' '으로 바꿔주는 함수
-{
-	for (int i = 0; i < strlen(str); i++)
-	{
-		if (str[i] == '\n') str[i] = ' ';
-	}
-	return str;
-}
+int get_file_size(FILE *fp);
+void cut_filename(char *H);
+int compare_with_size(const void *a, const void  *b);
+char *cut_enter(char* str);
+unsigned int file_number(char *file_directory);
 
 int main()
 {
-	char *file_directory = (char *)malloc(1024); //폴더 위치
-	char *find_str = (char *)malloc(1024); //찾고 싶은 단어
-	char *buffer; //어떤 파일 내용을 임시로 저장
-	char *e2;
-	char *str_ptr; //어떤 파일에서 찾고 싶은 단어의 위치(포인터)
-	int check = 0;
-	int i = 0; //총 파일 개수
+	char *file_directory = (char *)calloc(256, sizeof(char)); // 폴더 위치
+	char *find_str = (char *)calloc(256, sizeof(char)); // 찾고 싶은 단어
+	char *buffer;
+	char *buffer2;
+	char *str_ptr; // 어떤 파일에서 찾고 싶은 단어의 위치(포인터)
+	int i = 0; // 총 파일 개수
 	int j = 0;
-	int k = 0; //찾고 싶은 단어가 포함된 파일 개수
-	int file_size; //어떤 파일의 전체 텍스트 길이
+	int k = 0; // 찾고 싶은 단어가 존재하는 파일 개수
+	int file_size; // 어떤 파일의 전체 텍스트 길이
 	char YN1 = 'Y';
 	char YN2 = 'Y';
-	
-	_finddatai64_t c_file;
-	intptr_t hFile;
+	Result *r;
+	struct _finddata_t c_file;
+	long hFile;
 
 	printf("폴더 위치를 입력하세요 : ");
 	scanf("%[^\n]s", file_directory);
-
-	printf("찾고 싶은 단어를 입력하세요 : ");
-	scanf(" %[^\n]s", find_str);
-
-	printf("대소문자를 구분하나요?(Y/N) : ");
-	scanf(" %c", &YN1);
-
-	printf("입력한 단어만 정확히 검색하나요?(Y/N) : ");
-	scanf(" %c", &YN2);
 	getchar();
 
-	realloc(find_str, strlen(find_str) + 1);
+	printf("찾고 싶은 단어를 입력하세요 : ");
+	scanf("%[^\n]s", find_str);
+	getchar();
+
+	printf("대소문자를 구분하나요?(Y/N) : ");
+	YN1 = getchar();
+	getchar();
+
+	printf("입력한 단어만 정확히 검색하나요?(Y/N) : ");
+	YN2 = getchar();
+	getchar();
+
+	find_str = (char *)realloc(find_str, strlen(find_str) + 1);
 	strcat(file_directory, "\\*.txt");
 
-	if ((hFile = _findfirsti64(file_directory, &c_file)) == -1L)
+	if ((hFile = _findfirst(file_directory, &c_file)) == -1L)
 	{
 		switch (errno)
 		{
@@ -107,35 +69,26 @@ int main()
 	}
 	else
 	{
-		do
-		{
-			i++;
-		} while (_findnexti64(hFile, &c_file) == 0);
-		result *r = (result *)calloc(i, sizeof(result)); //파일 개수만큼 구조체 메모리 할당
-		_findclose(hFile);
-
-		i = 0;
-		hFile = _findfirsti64(file_directory, &c_file);
-		strcut(file_directory);
-
+		r = (Result *)calloc(file_number(file_directory), sizeof(Result));
+		cut_filename(file_directory);
 		do
 		{
 			strcat(file_directory, c_file.name);
 			FILE *fp = fopen(file_directory, "rt");
 			if (fp == NULL) return 1;
 
-			file_size = getFileSize(fp);
+			file_size = get_file_size(fp);
 			buffer = (char *)calloc(1, (size_t)file_size + 1);
-			e2 = (char *)calloc(1, (size_t)file_size + 1);
+			buffer2 = (char *)calloc(1, (size_t)file_size + 1);
 
-			while (!feof(fp)) //fgets이 파일 끝까지 버퍼에 저장
+			while (!feof(fp)) //파일 전체 내용을 buffer에 저장
 			{
-				e2 = fgets(e2, file_size, fp);	//fgets으로 문자열을 읽는데 오류가 나지 않는다고 가정
-				if (e2 == NULL)	break;	//strcat NULL 쓰기 방지
-				strcat(buffer, e2);
+				buffer2 = fgets(buffer2, file_size, fp);
+				if (buffer2 == NULL) break;	//strcat NULL 쓰기 방지
+				strcat(buffer, buffer2);
 			}
 
-			if (YN1 == 'N') //대소문자를 구분하지 않을 때
+			if (YN1 == 'N' || YN1 =='n')
 			{
 				_strlwr(buffer);
 				_strlwr(find_str);
@@ -144,19 +97,23 @@ int main()
 			str_ptr = strstr(buffer, find_str);
 			if (str_ptr != NULL)
 			{
-				r[k].str_location = (char *)calloc(50, sizeof(char));
-				r[k].filename = (char *)calloc(strlen(c_file.name), sizeof(char));
-				r[k].count = 0;
+				if (YN2 == 'N' || YN2 == 'n' || (*(str_ptr - 1) < 65 || 90 < *(str_ptr - 1) && *(str_ptr - 1) < 97 || 122 < *(str_ptr - 1)) && (*(str_ptr + strlen(find_str)) < 65 || 90 < *(str_ptr + strlen(find_str)) && *(str_ptr + strlen(find_str)) < 97 || 122 < *(str_ptr + strlen(find_str))))
+				{
+					r[k].filename = (char *)calloc(1, strlen(c_file.name) + 1);
+					strncpy(r[k].filename, c_file.name, strlen(c_file.name));
+					r[k].filename[strlen(c_file.name) + 1] = NULL;
 
-				strncpy(r[k].str_location, str_ptr, 49);
-				strcpy(r[k].filename, c_file.name);
-				r[k].str_location[49] = '\0';
-				
-				k++;
+					strncpy(r[k].str_location, str_ptr, sizeof(r[k].str_location) - 1);
+					r[k].str_location[sizeof(r[k].str_location) - 1] = NULL;
+
+					r[k].count = 0;
+
+					k++;
+				}
 			}
-			while (str_ptr != NULL) // 검색된 문자열이 없을 때까지 반복
+			while (str_ptr != NULL)
 			{
-				if (YN2 == 'N' || (*(str_ptr - 1)<65 || 90<*(str_ptr - 1) && *(str_ptr - 1)<97 || 122 < *(str_ptr - 1)) && (*(str_ptr + strlen(find_str))<65 || 90<*(str_ptr + strlen(find_str)) && *(str_ptr + strlen(find_str))<97 || 122 < *(str_ptr + strlen(find_str)))) //찾은 문자열 앞과 뒤에 알파벳이 없거나 (정확히 검색) = N이면
+				if (YN2 == 'N' || YN2 == 'n'|| (*(str_ptr - 1)<65 || 90<*(str_ptr - 1) && *(str_ptr - 1)<97 || 122 < *(str_ptr - 1)) && (*(str_ptr + strlen(find_str))<65 || 90<*(str_ptr + strlen(find_str)) && *(str_ptr + strlen(find_str))<97 || 122 < *(str_ptr + strlen(find_str)))) //찾은 문자열 앞과 뒤에 알파벳이 없거나  YN2가 n이면
 				{
 					(r[k - 1].count)++;
 				}
@@ -165,31 +122,37 @@ int main()
 
 			fclose(fp);
 			free(buffer);
-			free(e2);
+			free(buffer2);
 
 			buffer = NULL;
-			e2 = NULL;
+			buffer2 = NULL;
 
-			strcut(file_directory);
-			if (r[k - 1].count == 0) check++;
+			cut_filename(file_directory);
 			i++;
-		} while (_findnexti64(hFile, &c_file) == 0);
 
-		r = (result *)realloc(r, k * sizeof(result));
-		if (r == 0) return 2; //메모리 재할당 실패시
+		} while (_findnext(hFile, &c_file) != -1);
 
-		if (check == i) //모든 파일에 찾고 싶은 단어가 없으면
+		if (k == 0)
 		{
-			printf("\n:: No result\n");
+			printf("\n:: No result\n\n");
 		}
 		else
 		{
-			qsort(r, k, sizeof(result), compare_with_size);
-			printf("\n찾고 싶은 단어가 포함된 파일 개수 : %d\n", k);
+			r = (Result *)realloc(r, k * sizeof(Result));
+			if (r == NULL) return 2;
+
+			for (j = 0; j < k; j++)
+			{
+				printf("%-50s |%5d번 | ...%s...\n", r[j].filename, r[j].count, cut_enter(r[j].str_location));
+			}
+
+
+			qsort(r, k, sizeof(Result), compare_with_size);
+			printf("\n찾고 싶은 단어가 존재하는 파일 개수 : %d\n", k);
 			printf("\nFile name                                          |  Count | First word preview\n");
 			for (j = 0; j < k; j++)
 			{
-				printf("%-50s |%5d번 | ...%s...\n", r[j].filename, r[j].count, delete_enter(r[j].str_location));
+				printf("%-50s |%5d번 | ...%s...\n", r[j].filename, r[j].count, cut_enter(r[j].str_location));
 			}
 		}
 		_findclose(hFile);
@@ -199,4 +162,70 @@ int main()
 	}
 	system("pause");
 	return 0;
+}
+
+int get_file_size(FILE *fp)
+{
+	int size;
+	long currPos = ftell(fp);
+
+	fseek(fp, 0, SEEK_END);
+	size = (int)ftell(fp);
+
+	fseek(fp, currPos, SEEK_SET);
+
+	return size;
+}
+
+void cut_filename(char *H)	//file_directory에서 맨 뒤의 파일명을 제거하는 함수
+{
+	int i = 0;
+	while (H[i])
+	{
+		i++;
+	}
+	while (H[i] != '\\')
+	{
+		i--;
+	}
+	H[i + 1] = '\0';
+}
+
+int compare_with_size(const void *a, const void  *b)	//qsort 내림차순 정렬
+{
+	Result *ptr_a = (Result *)a;
+	Result *ptr_b = (Result *)b;
+
+	if (ptr_a->count < ptr_b->count) return 1;
+	else if (ptr_a->count == ptr_b->count) return 0;
+	else return -1;
+}
+
+char *cut_enter(char* str) //str에 포함된 '\n'을 ' '으로 바꿔주는 함수
+{
+	for (int i = 0; i < strlen(str); i++)
+	{
+		if (str[i] == '\n') str[i] = ' ';
+	}
+	return str;
+}
+
+unsigned int file_number(char *file_directory)
+{
+	_finddata_t fd;
+	long handle;
+	int result = 1;
+	unsigned int file_number = 0;
+
+	handle = _findfirst(file_directory, &fd);
+	if (handle == -1) return 0;
+
+	while (result != -1)
+	{
+		file_number++;
+		result = _findnext(handle, &fd);
+	}
+	_findclose(handle);
+
+	return file_number;
 }
