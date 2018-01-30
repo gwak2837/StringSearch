@@ -16,6 +16,7 @@ void cut_filename(char *H);
 int compare_with_size(const void *a, const void  *b);
 char *cut_enter(char* str);
 unsigned int file_number(char *file_directory);
+int exact_search(char *string_pointer, char *find_str);
 
 int main()
 {
@@ -94,10 +95,11 @@ int main()
 				_strlwr(find_str);
 			}
 
+			// 조건에 맞는 단어를 찾으면 메모리를 할당
 			str_ptr = strstr(buffer, find_str);
-			if (str_ptr != NULL)
+			while (str_ptr != NULL)
 			{
-				if (YN2 == 'N' || YN2 == 'n' || (*(str_ptr - 1) < 65 || 90 < *(str_ptr - 1) && *(str_ptr - 1) < 97 || 122 < *(str_ptr - 1)) && (*(str_ptr + strlen(find_str)) < 65 || 90 < *(str_ptr + strlen(find_str)) && *(str_ptr + strlen(find_str)) < 97 || 122 < *(str_ptr + strlen(find_str))))
+				if (YN2 == 'n' || YN2 == 'N' || exact_search(str_ptr, find_str) == 1)
 				{
 					r[k].filename = (char *)calloc(1, strlen(c_file.name) + 1);
 					strncpy(r[k].filename, c_file.name, strlen(c_file.name));
@@ -109,14 +111,16 @@ int main()
 					r[k].count = 0;
 
 					k++;
+					break;
 				}
+				str_ptr = strstr(str_ptr + strlen(find_str), find_str);
 			}
+			
+			// 이후 조건에 맞는 단어를 찾으면 count만 증가
 			while (str_ptr != NULL)
 			{
-				if (YN2 == 'N' || YN2 == 'n'|| (*(str_ptr - 1)<65 || 90<*(str_ptr - 1) && *(str_ptr - 1)<97 || 122 < *(str_ptr - 1)) && (*(str_ptr + strlen(find_str))<65 || 90<*(str_ptr + strlen(find_str)) && *(str_ptr + strlen(find_str))<97 || 122 < *(str_ptr + strlen(find_str)))) //찾은 문자열 앞과 뒤에 알파벳이 없거나  YN2가 n이면
-				{
-					(r[k - 1].count)++;
-				}
+				if (YN2 == 'n' || YN2 == 'N' || exact_search(str_ptr, find_str) == 1) 
+					r[k - 1].count++;
 				str_ptr = strstr(str_ptr + strlen(find_str), find_str);
 			}
 
@@ -140,12 +144,6 @@ int main()
 		{
 			r = (Result *)realloc(r, k * sizeof(Result));
 			if (r == NULL) return 2;
-
-			for (j = 0; j < k; j++)
-			{
-				printf("%-50s |%5d번 | ...%s...\n", r[j].filename, r[j].count, cut_enter(r[j].str_location));
-			}
-
 
 			qsort(r, k, sizeof(Result), compare_with_size);
 			printf("\n찾고 싶은 단어가 존재하는 파일 개수 : %d\n", k);
@@ -177,7 +175,7 @@ int get_file_size(FILE *fp)
 	return size;
 }
 
-void cut_filename(char *H)	//file_directory에서 맨 뒤의 파일명을 제거하는 함수
+void cut_filename(char *H)	//file_directory에서 맨 뒤의 파일명을 제거
 {
 	int i = 0;
 	while (H[i])
@@ -201,7 +199,7 @@ int compare_with_size(const void *a, const void  *b)	//qsort 내림차순 정렬
 	else return -1;
 }
 
-char *cut_enter(char* str) //str에 포함된 '\n'을 ' '으로 바꿔주는 함수
+char *cut_enter(char* str) //str에 포함된 '\n'을 공백으로 바꿈
 {
 	for (int i = 0; i < strlen(str); i++)
 	{
@@ -228,4 +226,10 @@ unsigned int file_number(char *file_directory)
 	_findclose(handle);
 
 	return file_number;
+}
+
+int exact_search(char *str_ptr, char *find_str)
+{
+	if ((*(str_ptr - 1) < 65 || 90 < *(str_ptr - 1) && *(str_ptr - 1) < 97 || 122 < *(str_ptr - 1)) && (*(str_ptr + strlen(find_str)) < 65 || 90 < *(str_ptr + strlen(find_str)) && *(str_ptr + strlen(find_str)) < 97 || 122 < *(str_ptr + strlen(find_str)))) return 1;
+	else return -1;
 }
