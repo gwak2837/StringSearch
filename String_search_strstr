@@ -82,12 +82,13 @@ int main()
 			buffer = (char *)calloc(1, (size_t)file_size + 1);
 			buffer2 = (char *)calloc(1, (size_t)file_size + 1);
 
-			while (!feof(fp)) //파일 전체 내용을 buffer에 저장
+			while (1) //파일 전체 내용을 buffer에 저장
 			{
 				buffer2 = fgets(buffer2, file_size, fp);
-				if (buffer2 == NULL) break;	//strcat NULL 쓰기 방지
+				if (feof(fp) != 0) break;
+				else if (buffer2 == NULL) return 3;
 				strcat(buffer, buffer2);
-			}
+			} 
 
 			if (YN1 == 'N' || YN1 =='n')
 			{
@@ -135,6 +136,7 @@ int main()
 			i++;
 
 		} while (_findnext(hFile, &c_file) != -1);
+		_findclose(hFile);
 
 		if (k == 0)
 		{
@@ -153,7 +155,7 @@ int main()
 				printf("%-50s |%5d번 | ...%s...\n", r[j].filename, r[j].count, cut_enter(r[j].str_location));
 			}
 		}
-		_findclose(hFile);
+		
 		free(r);
 		free(find_str);
 		free(file_directory);
@@ -199,7 +201,7 @@ int compare_with_size(const void *a, const void  *b)	//qsort 내림차순 정렬
 	else return -1;
 }
 
-char *cut_enter(char* str) //str에 포함된 '\n'을 공백으로 바꿈
+char *cut_enter(char* str) //str에 포함된 '\n'을 ' '으로 바꿈
 {
 	for (int i = 0; i < strlen(str); i++)
 	{
